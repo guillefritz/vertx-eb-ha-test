@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	
+	<property name="APP_NAME" value="t"/>
+	
+	<conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+	<conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+
+	<property name="APP_NBR" value="${APP_NBR:- }" />
+	<property name="CONSOLE_LOG_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} [${APP_NAME}] %clr(%5p) %clr(${PID:- }){magenta} %clr(->){faint} %clr([%15.15t{14}]){faint} \\(%F:%L\\) %logger{0}%clr(:){faint} %m%n%ex{full,
+          com.sun.proxy.$Proxy,
+          io.vertx.core,
+          java.lang.reflect.Method,
+          java.lang.Thread.run,
+          java.util.concurrent.ThreadPoolExecutor,
+          javax.servlet.http.HttpServlet,
+          mir.util.config.aspect,
+          mir.util.config.ws.CustomHttpInvokerServiceExporter,
+          mir.util.config.ws.RMIMethodInterceptor,
+          net.bull.javamelody,
+          net.sf.cglib,
+          org.apache.catalina,
+          org.apache.coyote,
+          org.apache.tomcat,
+          org.mvel2,
+          org.springframework.aop,
+          org.springframework.boot.actuate,
+          org.springframework.boot.context,
+          org.springframework.remoting,
+          org.springframework.security,
+          org.springframework.transaction,
+          org.springframework.web,
+          org.springframework.cache,
+          org.testng,
+          sun.reflect,
+          ByCGLIB
+        }"/>
+	<property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [${APP_NAME}] %5p ${PID:- } [%t] -> \\(%F:%L\\) %logger{0}: %m%n%ex{full,
+          com.sun.proxy.$Proxy,
+          io.vertx.core,
+          java.lang.reflect.Method,
+          java.lang.Thread.run,
+          java.util.concurrent.ThreadPoolExecutor,
+          javax.servlet.http.HttpServlet,
+          mir.util.config.aspect,
+          mir.util.config.ws.CustomHttpInvokerServiceExporter,
+          mir.util.config.ws.RMIMethodInterceptor,
+          net.bull.javamelody,
+          net.sf.cglib,
+          org.apache.catalina,
+          org.apache.coyote,
+          org.apache.tomcat,
+          org.mvel2,
+          org.springframework.aop,
+          org.springframework.boot.actuate,
+          org.springframework.boot.context,
+          org.springframework.remoting,
+          org.springframework.security,
+          org.springframework.transaction,
+          org.springframework.web,
+          org.springframework.cache,
+          org.testng,
+          sun.reflect,
+          ByCGLIB
+        }"/>
+
+	<appender name="DEBUG_LEVEL_REMAPPER" class="org.springframework.boot.logging.logback.LevelRemappingAppender">
+		<destinationLogger>org.springframework.boot</destinationLogger>
+	</appender>
+
+	<logger name="mir" level="DEBUG"/>
+<!-- 	<logger name="org.springframework.security" level="DEBUG"/> -->
+	
+	<logger name="mir.si.dao.map" level="INFO"/>
+	<logger name="mir.mm.dao.map" level="INFO"/>
+	<logger name="mir.pp.dao.map" level="INFO"/>
+	<logger name="mir.hr.dao.map" level="INFO"/>
+	
+	<logger name="mir.util.config.ws.CustomHttpComponentsHttpInvokerRequestExecutor" level="INFO"/>
+	<logger name="mir.util.config.ws.CustomHttpInvokerServiceExporter" level="INFO"/>
+	
+	
+	<logger name="org.apache.ibatis" level="INFO"/>
+	<logger name="org.apache.catalina.startup.DigesterFactory" level="ERROR"/>
+	<logger name="org.apache.catalina.util.LifecycleBase" level="ERROR"/>
+	<logger name="org.apache.coyote.http11.Http11NioProtocol" level="WARN"/>
+	<logger name="org.apache.sshd.common.util.SecurityUtils" level="WARN"/>
+	<logger name="org.apache.tomcat.util.net.NioSelectorPool" level="WARN"/>
+	<logger name="org.crsh.plugin" level="WARN"/>
+	<logger name="org.crsh.ssh" level="WARN"/>
+	<logger name="org.eclipse.jetty.util.component.AbstractLifeCycle" level="ERROR"/>
+	<logger name="org.hibernate.validator.internal.util.Version" level="WARN"/>
+	<logger name="org.springframework.boot.actuate.autoconfigure.CrshAutoConfiguration" level="WARN"/>
+	<logger name="org.springframework.boot.actuate.endpoint.jmx" additivity="false">
+		<appender-ref ref="DEBUG_LEVEL_REMAPPER"/>
+	</logger>
+	<logger name="org.thymeleaf" additivity="false">
+		<appender-ref ref="DEBUG_LEVEL_REMAPPER"/>
+	</logger>
+	<property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}${APP_NAME}${APP_NBR}.log}"/>
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>${CONSOLE_LOG_PATTERN}</pattern>
+			<charset>utf8</charset>
+		</encoder>
+	</appender>
+
+    
+	<appender name="FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+		<file>${LOG_FILE}</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+	      <!-- rollover daily -->
+	      <fileNamePattern>${LOG_FILE}-%d{yyyy-MM-dd}.%i</fileNamePattern>
+	      <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+	        <!-- or whenever the file size reaches 100MB -->
+	        <maxFileSize>5MB</maxFileSize>
+			<!-- 2 years -->
+	      </timeBasedFileNamingAndTriggeringPolicy>
+	      <maxHistory>730</maxHistory>
+	    </rollingPolicy>
+<!-- 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy"> -->
+<!-- 			<fileNamePattern>${LOG_FILE}.%i</fileNamePattern> -->
+<!-- 		</rollingPolicy> -->
+<!-- 		<triggeringPolicy -->
+<!-- 			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy"> -->
+<!-- 			<MaxFileSize>10MB</MaxFileSize> -->
+<!-- 		</triggeringPolicy> -->
+	</appender>
+	
+	<root level="INFO">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="FILE" />
+	</root>
+
+</configuration>
