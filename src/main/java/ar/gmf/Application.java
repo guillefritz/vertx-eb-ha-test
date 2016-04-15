@@ -9,24 +9,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.impl.Deployment;
 import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.spi.VerticleFactory;
 
 @SpringBootApplication
 @Import(VertxConfig.class)
 public class Application {
+
+	private static final String SESSION2 = "session";
 
 	protected final static Logger logger = LoggerFactory.getLogger(Application.class);
 
@@ -61,19 +60,14 @@ public class Application {
 				logger.error("deploy Server error {} ", h.cause());
 		});
 
-//		if (port != 8080) 
-		{
-			initConsumer = vertx.eventBus().consumer("initClick", msg -> {
-				logger.info("initClick {}", msg.body().toString());
-				deployClickVerticle(msg.body().toString(), msg);
-			});
-		}
+		initConsumer = vertx.eventBus().consumer("initClick", msg -> {
+			logger.info("initClick {}", msg.body().toString());
+			deployClickVerticle(msg.body().toString(), msg);
+		});
 		
 		vertx.eventBus().consumer("emigrate-" + port, msg -> {
 			initConsumer.unregister(h -> {
 				logger.info("unregister initConsumer");
-				
-//				CountDownLatch countDownLatch = new CountDownLatch(depIds.size()); 
 				
 				VertxImpl vertxImpl = (VertxImpl)vertx;
 				vertxImpl.deploymentIDs().stream().forEach(_d -> {
@@ -82,31 +76,20 @@ public class Application {
 					Deployment deployment = vertxImpl.getDeployment(d);
 					if (deployment != null) {
 						DeploymentOptions deploymentOptions = vertxImpl.getDeployment(d).deploymentOptions();
-						if (deploymentOptions.getConfig().getString("session") != null) {
-							logger.info("apagando -> initclick {}", d);
-							vertx.eventBus().send("initClick", deploymentOptions.getConfig().getString("session"), h2 -> {
-								logger.info("apagando -> initclick -> emigrate {}", d);
+						if (deploymentOptions.getConfig()!=null && deploymentOptions.getConfig().getString(SESSION2) != null) {
+							logger.info("shutting down -> initclick {}", d);
+							vertx.eventBus().send("initClick", deploymentOptions.getConfig().getString(SESSION2), h2 -> {
+								logger.info("shutting down -> initclick -> emigrate {}", d);
 								vertx.eventBus().send("emigrate-v-" + d, "", h4 -> {
-									logger.info("apagando -> initclick -> emigrate -> ok {}", d);
-									// countDownLatch.countDown();
+									logger.info("shutting down -> initclick -> emigrate -> ok {}", d);
 								});
 							});
 						}
-					} else {
-						// countDownLatch.countDown();
 					}
 
-					// vertx.deployVerticle(vertxImpl.getDeployment(d).verticleIdentifier(),
-					// deploymentOptions, h2 -> {
-					// vertx.eventBus().send("emigrate-v-" + d, "");
-					// });
 				});
 				
-//				try {
-//					countDownLatch.await(30, TimeUnit.SECONDS);
-//				} catch (Exception e) {
-//					logger.error("error",e);
-//				}
+				//TODO: has to finish when everything has been emigrated, using CountDownLAtch or similar... 
 				vertx.setTimer(10000, t -> msg.reply("ok"));
 			});
 		});
@@ -120,7 +103,7 @@ public class Application {
 		options.setHa(true);
 		
 		JsonObject config = new JsonObject();
-		config.put("session", session);
+		config.put(SESSION2, session);
 		options.setConfig(config);
 		
 		vertx.deployVerticle("spring:ar.gmf.ClickVerticle", options, h -> {
