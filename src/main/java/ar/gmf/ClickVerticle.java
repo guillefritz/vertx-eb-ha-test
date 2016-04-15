@@ -1,7 +1,11 @@
 package ar.gmf;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.io.Writer;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,17 +46,27 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 	 * session variables
 	 */
 	Integer counter = 0;
-
+	transient XStream x = new XStream(new XppDriver() {
+	    @Override
+	    public HierarchicalStreamWriter createWriter(Writer out) {
+	        return new CompactWriter(out, getNameCoder());
+	    }
+	});
+	
+	
 //	List<MessageConsumer<Object>> consumers = new ArrayList<>();
 
 	@Override
 	public void start() throws Exception {
 		super.start();
+		
+		x.omitField(AbstractVerticle.class, "context");
+		x.omitField(AbstractVerticle.class, "vertx");
 
 		session = config().getString("session");
 
-		vertx.eventBus().consumer("emigrar-v-" + deploymentID(), msg -> {
-			logger.info("undeploy " + "emigrar-v-" + deploymentID());
+		vertx.eventBus().consumer("emigrate-v-" + deploymentID(), msg -> {
+			logger.info("undeploy " + "emigrate-v-" + deploymentID());
 			vertx.undeploy(deploymentID(), h -> msg.reply("ok"));
 		});
 		
@@ -63,8 +77,12 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 				asyncMap.get(session, rr -> {
 					if (rr.succeeded() && rr.result() != null) {
 						logger.info("reinicializando ClickVerticle desde sesion {}", deploymentID());
-//						Integer oldCount = (Integer) rr.result();
-//						setCounter(oldCount);
+						
+//						try (ByteArrayInputStream bais = new ByteArrayInputStream((byte[]) rr.result()); GZIPInputStream gzipIn = new GZIPInputStream(bais)) {
+//							x.fromXML(gzipIn, ClickVerticle.this);
+//						} catch (Exception e) {
+//							logger.error("", e);
+//						}
 						
 						XStream x = new XStream();
 						x.fromXML((String)rr.result(), this);
@@ -101,15 +119,15 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 //						msg.reply(counter);
 //					});
 					
-					XStream x = new XStream(new XppDriver() {
-					    @Override
-					    public HierarchicalStreamWriter createWriter(Writer out) {
-					        return new CompactWriter(out, getNameCoder());
-					    }
-					});
-//					XStream x = new XStream();
-					x.omitField(AbstractVerticle.class, "context");
-					x.omitField(AbstractVerticle.class, "vertx");
+//					try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); GZIPOutputStream gzipOut = new GZIPOutputStream(baos)) {
+//						x.toXML(ClickVerticle.this, gzipOut);
+//						byte[] bytes = baos.toByteArray();
+//						asyncMap.put(session, bytes, h -> {
+//							msg.reply(counter);
+//						});
+//					} catch (Exception e) {
+//						logger.error("", e);
+//					}
 					
 					String xml = x.toXML(ClickVerticle.this);
 					asyncMap.put(session, xml, h -> {

@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
@@ -38,27 +39,29 @@ public class VertxConfig {
 
 	@Value("${vertx.haEnabled:true}")
 	Boolean haEnabled;
-
+	@Autowired
+	SpringVerticleFactory springVerticleFactory;
+	
 	/*
 	 * TODO: borrar ya que se arma con HazelcastConfig
 	 */
-	@Bean(destroyMethod = "shutdown")
-	public HazelcastInstance hazelcastInstance(Environment env) {
-
-		if (StringUtils.isBlank(System.getProperty("app.nodo"))) {
-			System.setProperty("app.nodo", env.getProperty("app.nodo", "TA"));
-		}
-		if (StringUtils.isBlank(System.getProperty("app.members"))) {
-			System.setProperty("app.members", env.getProperty("app.members", "127.0.0.1"));
-		}
-		if (StringUtils.isBlank(System.getProperty("spring.profiles.active"))) {
-			System.setProperty("spring.profiles.active", env.getProperty("spring.profiles.active", ""));
-		}
-
-		Config config = new ClasspathXmlConfig("clusterSIM.xml");
-		config.setLiteMember(true);
-		return Hazelcast.newHazelcastInstance(config);
-	}
+//	@Bean(destroyMethod = "shutdown")
+//	public HazelcastInstance hazelcastInstance(Environment env) {
+//
+//		if (StringUtils.isBlank(System.getProperty("app.nodo"))) {
+//			System.setProperty("app.nodo", env.getProperty("app.nodo", "TA"));
+//		}
+//		if (StringUtils.isBlank(System.getProperty("app.members"))) {
+//			System.setProperty("app.members", env.getProperty("app.members", "127.0.0.1"));
+//		}
+//		if (StringUtils.isBlank(System.getProperty("spring.profiles.active"))) {
+//			System.setProperty("spring.profiles.active", env.getProperty("spring.profiles.active", ""));
+//		}
+//
+//		Config config = new ClasspathXmlConfig("clusterSIM.xml");
+//		config.setLiteMember(true);
+//		return Hazelcast.newHazelcastInstance(config);
+//	}
 
 	@Bean(destroyMethod = "close")
 	public Vertx vertx(Environment env, SpringVerticleFactory springVerticleFactory) throws Throwable {

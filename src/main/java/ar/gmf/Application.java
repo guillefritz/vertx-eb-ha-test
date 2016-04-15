@@ -34,9 +34,7 @@ public class Application {
 	Integer port;
 	@Autowired
 	Vertx vertx;
-	@Autowired
-	AutowireCapableBeanFactory autowireCapableBeanFactory;
-
+	
 	public static void main(String[] args) throws Exception {
 
 		System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory");
@@ -48,18 +46,6 @@ public class Application {
 
 	@PostConstruct
 	public void deployVerticle() {
-
-		vertx.registerVerticleFactory(new VerticleFactory() {
-			@Override
-			public String prefix() {
-				return "spring";
-			}
-			@Override
-			public Verticle createVerticle(String verticleName, ClassLoader classLoader) throws Exception {
-				verticleName = VerticleFactory.removePrefix(verticleName);
-				return (Verticle)autowireCapableBeanFactory.getBean(Class.forName(verticleName));
-			}
-		});
 		
 		JsonObject config = new JsonObject();
 		config.put("port", port);
@@ -78,11 +64,12 @@ public class Application {
 //		if (port != 8080) 
 		{
 			initConsumer = vertx.eventBus().consumer("initClick", msg -> {
-				logger.info("initClick {}", msg.body().toString());deployClickVerticle(msg.body().toString(), msg);
+				logger.info("initClick {}", msg.body().toString());
+				deployClickVerticle(msg.body().toString(), msg);
 			});
 		}
 		
-		vertx.eventBus().consumer("emigrar-" + port, msg -> {
+		vertx.eventBus().consumer("emigrate-" + port, msg -> {
 			initConsumer.unregister(h -> {
 				logger.info("unregister initConsumer");
 				
@@ -98,9 +85,9 @@ public class Application {
 						if (deploymentOptions.getConfig().getString("session") != null) {
 							logger.info("apagando -> initclick {}", d);
 							vertx.eventBus().send("initClick", deploymentOptions.getConfig().getString("session"), h2 -> {
-								logger.info("apagando -> initclick -> emigrar {}", d);
-								vertx.eventBus().send("emigrar-v-" + d, "", h4 -> {
-									logger.info("apagando -> initclick -> emigrar -> ok {}", d);
+								logger.info("apagando -> initclick -> emigrate {}", d);
+								vertx.eventBus().send("emigrate-v-" + d, "", h4 -> {
+									logger.info("apagando -> initclick -> emigrate -> ok {}", d);
 									// countDownLatch.countDown();
 								});
 							});
@@ -111,7 +98,7 @@ public class Application {
 
 					// vertx.deployVerticle(vertxImpl.getDeployment(d).verticleIdentifier(),
 					// deploymentOptions, h2 -> {
-					// vertx.eventBus().send("emigrar-v-" + d, "");
+					// vertx.eventBus().send("emigrate-v-" + d, "");
 					// });
 				});
 				

@@ -19,6 +19,11 @@ public class SpringVerticleFactory implements VerticleFactory {
 	}
 	
 	@Override
+	public boolean blockingCreate() {
+		return true;
+	}
+	
+	@Override
 	public Verticle createVerticle(String verticleName, ClassLoader classLoader) throws Exception {
 		verticleName = VerticleFactory.removePrefix(verticleName);
 		return (Verticle) beanFactory.getBean(Class.forName(verticleName));
