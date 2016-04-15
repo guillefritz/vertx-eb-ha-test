@@ -19,6 +19,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.impl.Deployment;
 import io.vertx.core.impl.VertxImpl;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.VerticleFactory;
@@ -64,7 +65,7 @@ public class Application {
 		config.put("port", port);
 
 		DeploymentOptions options = new DeploymentOptions();
-//		options.setHa(false);
+		options.setHa(false);
 		options.setConfig(config);
 
 		vertx.deployVerticle("ar.gmf.Server", options, h -> {
@@ -77,7 +78,7 @@ public class Application {
 //		if (port != 8080) 
 		{
 			initConsumer = vertx.eventBus().consumer("initClick", msg -> {
-				deployClickVerticle(msg.body().toString(), msg);
+				logger.info("initClick {}", msg.body().toString());deployClickVerticle(msg.body().toString(), msg);
 			});
 		}
 		
@@ -85,20 +86,41 @@ public class Application {
 			initConsumer.unregister(h -> {
 				logger.info("unregister initConsumer");
 				
-				depIds.stream().forEach(d -> {
-					VertxImpl vertxImpl = (VertxImpl)vertx;
-					DeploymentOptions deploymentOptions = vertxImpl.getDeployment(d).deploymentOptions();
-					
-					vertx.eventBus().send("initClick", deploymentOptions.getConfig().getString("session"), h2 -> {
-						vertx.eventBus().send("emigrar-v-" + d, "");
-					});
-					
-//					vertx.deployVerticle(vertxImpl.getDeployment(d).verticleIdentifier(), deploymentOptions, h2 -> {
-//						vertx.eventBus().send("emigrar-v-" + d, "");
-//					});
+//				CountDownLatch countDownLatch = new CountDownLatch(depIds.size()); 
+				
+				VertxImpl vertxImpl = (VertxImpl)vertx;
+				vertxImpl.deploymentIDs().stream().forEach(_d -> {
+					final String d = _d;
+
+					Deployment deployment = vertxImpl.getDeployment(d);
+					if (deployment != null) {
+						DeploymentOptions deploymentOptions = vertxImpl.getDeployment(d).deploymentOptions();
+						if (deploymentOptions.getConfig().getString("session") != null) {
+							logger.info("apagando -> initclick {}", d);
+							vertx.eventBus().send("initClick", deploymentOptions.getConfig().getString("session"), h2 -> {
+								logger.info("apagando -> initclick -> emigrar {}", d);
+								vertx.eventBus().send("emigrar-v-" + d, "", h4 -> {
+									logger.info("apagando -> initclick -> emigrar -> ok {}", d);
+									// countDownLatch.countDown();
+								});
+							});
+						}
+					} else {
+						// countDownLatch.countDown();
+					}
+
+					// vertx.deployVerticle(vertxImpl.getDeployment(d).verticleIdentifier(),
+					// deploymentOptions, h2 -> {
+					// vertx.eventBus().send("emigrar-v-" + d, "");
+					// });
 				});
 				
-				msg.reply("ok");
+//				try {
+//					countDownLatch.await(30, TimeUnit.SECONDS);
+//				} catch (Exception e) {
+//					logger.error("error",e);
+//				}
+				vertx.setTimer(10000, t -> msg.reply("ok"));
 			});
 		});
 	}
@@ -118,8 +140,12 @@ public class Application {
 			if (h.succeeded()) {
 				logger.info("deploy ClickVerticle {}", h.result());
 				depIds.add(h.result());
-				if(msg!=null)
-					msg.reply(h.result());
+				
+				vertx.eventBus().send("click-"+session, "", r-> {
+					if(msg!=null)
+						msg.reply(h.result()+r.result());
+				});
+				
 			} else {
 				logger.error("deploy ClickVerticle error {} ", h.cause());
 				if(msg!=null)

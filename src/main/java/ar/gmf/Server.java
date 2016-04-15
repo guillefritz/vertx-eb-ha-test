@@ -12,12 +12,11 @@ import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
+import io.vertx.ext.web.handler.sockjs.Transport;
 
 public class Server extends AbstractVerticle {
 
 	protected final static Logger logger = LoggerFactory.getLogger(Server.class);
-
-	// public static final String SESSION_COOKIE_NAME = "vertx-web.session";
 
 	@Override
 	public void start() throws Exception {
@@ -32,7 +31,7 @@ public class Server extends AbstractVerticle {
 		
 		BridgeOptions options = new BridgeOptions().addInboundPermitted(new PermittedOptions()).addOutboundPermitted(new PermittedOptions());
 		SockJSHandlerOptions sockJsOptions = new SockJSHandlerOptions();
-		// sockJsOptions.addDisabledTransport(Transport.XHR.toString());
+		sockJsOptions.addDisabledTransport(Transport.XHR.toString());
 		router.route("/eventbus/*").handler(SockJSHandler.create(vertx, sockJsOptions).bridge(options));
 
 		// Serve the static pages

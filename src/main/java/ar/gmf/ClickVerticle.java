@@ -1,6 +1,7 @@
 package ar.gmf;
 
 import java.io.Serializable;
+import java.io.Writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import com.thoughtworks.xstream.io.xml.CompactWriter;
+import com.thoughtworks.xstream.io.xml.XppDriver;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.shareddata.AsyncMap;
@@ -19,7 +23,7 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 
 	private static final long serialVersionUID = 4264536910134665055L;
 
-	protected final Logger logger = LoggerFactory.getLogger(getClass());
+	protected transient final Logger logger = LoggerFactory.getLogger(getClass());
 
 	/*
 	 * session (needed of course)
@@ -48,8 +52,8 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 		session = config().getString("session");
 
 		vertx.eventBus().consumer("emigrar-v-" + deploymentID(), msg -> {
-			logger.info("undeploy "+"emigrar-v-" + deploymentID());
-			vertx.undeploy(deploymentID());
+			logger.info("undeploy " + "emigrar-v-" + deploymentID());
+			vertx.undeploy(deploymentID(), h -> msg.reply("ok"));
 		});
 		
 		vertx.sharedData().getClusterWideMap("VM", r -> {
@@ -97,13 +101,19 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 //						msg.reply(counter);
 //					});
 					
-					XStream x = new XStream();
+					XStream x = new XStream(new XppDriver() {
+					    @Override
+					    public HierarchicalStreamWriter createWriter(Writer out) {
+					        return new CompactWriter(out, getNameCoder());
+					    }
+					});
+//					XStream x = new XStream();
 					x.omitField(AbstractVerticle.class, "context");
 					x.omitField(AbstractVerticle.class, "vertx");
-					x.omitField(ClickVerticle.class, "logger");
+					
 					String xml = x.toXML(ClickVerticle.this);
 					asyncMap.put(session, xml, h -> {
-						logger.info(xml);
+						//logger.info(xml);
 						msg.reply(counter);
 					});
 				})
@@ -137,7 +147,7 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 //				)
 				;
 
-//				consumers.add(vertx.eventBus().consumer("redeployV2-" + session, msg -> {
+//				vertx.eventBus().consumer("redeployV2-" + session, msg -> {
 //
 //					vertx.sharedData().getClusterWideMap("VM", r2 -> {
 //						if (r2.succeeded() && r2.result() != null) {
@@ -153,7 +163,7 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 //							msg.reply(counter);
 //						}
 //					});
-//				}));
+//				});
 
 			} else {
 				logger.error("error", r.cause());

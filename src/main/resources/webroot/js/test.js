@@ -8,8 +8,8 @@ app.config(['vertxEventBusProvider', 'vertxEventBusServiceProvider',
 			.useDebug(true)
 	    	.useReconnect()
 	    	.useSockJsReconnectInterval(5000)
+	    	//.useUrlServer( ruta = window.location.protocol + '//' + window.location.hostname + ':' + 8000 )
 	    	;
-//		    .useUrlServer( ruta );// 7777
 		
 	    vertxEventBusServiceProvider
 		    .useDebug(true)
