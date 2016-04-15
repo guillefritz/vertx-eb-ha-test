@@ -76,7 +76,7 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 
 				asyncMap.get(session, rr -> {
 					if (rr.succeeded() && rr.result() != null) {
-						logger.info("reinicializando ClickVerticle desde sesion {}", deploymentID());
+						logger.info("recovering ClickVerticle desde sesion {}", deploymentID());
 						
 //						try (ByteArrayInputStream bais = new ByteArrayInputStream((byte[]) rr.result()); GZIPInputStream gzipIn = new GZIPInputStream(bais)) {
 //							x.fromXML(gzipIn, ClickVerticle.this);

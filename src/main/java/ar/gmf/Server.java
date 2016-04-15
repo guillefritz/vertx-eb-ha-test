@@ -42,7 +42,7 @@ public class Server extends AbstractVerticle {
 		// staticHandler.setIndexPage(path+"static/index.html");
 		router.route("/static/*").handler(staticHandler);
 
-		router.get("/emigrate-" + port).handler(ctx -> {
+		router.get("/emigrate").handler(ctx -> {
 			vertx.eventBus().send("emigrate-"+port, "", r -> ctx.response().end("ok"));
 		});
 		
