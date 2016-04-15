@@ -1,11 +1,8 @@
 package ar.gmf;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.io.Writer;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,23 +26,6 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 
 	protected transient final Logger logger = LoggerFactory.getLogger(getClass());
 
-	/*
-	 * session (needed of course)
-	 */
-	String session;
-	
-	/*
-	 * spring variables
-	 */
-//	@Autowired
-//	EventBus eventBus;
-//	@Value("${server.port}")
-//	Integer port;
-
-	/*
-	 * session variables
-	 */
-	Integer counter = 0;
 	transient XStream x = new XStream(new XppDriver() {
 	    @Override
 	    public HierarchicalStreamWriter createWriter(Writer out) {
@@ -53,12 +33,23 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 	    }
 	});
 	
+	/*
+	 * session (very needed of course!)
+	 */
+	String session;
 	
-//	List<MessageConsumer<Object>> consumers = new ArrayList<>();
+	/*
+	 * Verticle "session" variables
+	 */
+	Integer counter = 0;
+	Date startDate;
+	
 
 	@Override
 	public void start() throws Exception {
 		super.start();
+		
+		startDate = new Date();
 		
 		x.omitField(AbstractVerticle.class, "context");
 		x.omitField(AbstractVerticle.class, "vertx");
@@ -78,12 +69,6 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 					if (rr.succeeded() && rr.result() != null) {
 						logger.info("recovering ClickVerticle desde sesion {}", deploymentID());
 						
-//						try (ByteArrayInputStream bais = new ByteArrayInputStream((byte[]) rr.result()); GZIPInputStream gzipIn = new GZIPInputStream(bais)) {
-//							x.fromXML(gzipIn, ClickVerticle.this);
-//						} catch (Exception e) {
-//							logger.error("", e);
-//						}
-						
 						XStream x = new XStream();
 						x.fromXML((String)rr.result(), this);
 
@@ -100,11 +85,9 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 					}
 				});
 
-//				consumers.add(
 				vertx.eventBus().consumer("click-" + session, msg -> {
 					counter++;
 					logger.info("clicked {} {} ", counter, deploymentID());
-					//asyncMap.put(session, counter, h -> msg.reply(counter));
 					
 //					Kryo kryo = new Kryo();
 //					kryo.setReferences(true);
@@ -119,69 +102,19 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 //						msg.reply(counter);
 //					});
 					
-//					try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); GZIPOutputStream gzipOut = new GZIPOutputStream(baos)) {
-//						x.toXML(ClickVerticle.this, gzipOut);
-//						byte[] bytes = baos.toByteArray();
-//						asyncMap.put(session, bytes, h -> {
-//							msg.reply(counter);
-//						});
-//					} catch (Exception e) {
-//						logger.error("", e);
-//					}
-					
 					String xml = x.toXML(ClickVerticle.this);
 					asyncMap.put(session, xml, h -> {
-						//logger.info(xml);
-						msg.reply(counter);
+						msg.reply(String.format("Verticle started at %s the counter is %s", startDate, counter));
 					});
-				})
-//						)
-				;
+				});
 				
-//				consumers.add(vertx.eventBus().consumer("click-" + session, msg -> {
-//					counter++;
-//					logger.info("clicked {} {}", counter, deploymentID());
-//
-//					vertx.sharedData().getClusterWideMap("VM", r2 -> {
-//						if (r2.succeeded()) {
-//							AsyncMap<Object, Object> asyncMap2 = r2.result();
-//							logger.info("........ {}", session);
-//							asyncMap2.put(session, counter, h -> msg.reply(counter));
-//						} else {
-//							logger.error("error", r2.cause());
-//							 msg.reply(counter);
-//						}
-//					});
-//				}));
-
-//				consumers.add(
 				vertx.eventBus().consumer("undeployClick-" + session, msg -> {
 					logger.info("undeployClick at counter {} {}", counter, deploymentID());
 					vertx.undeploy(deploymentID(), h -> {
 						logger.info("undeployClick finished {}", h.succeeded());
 						msg.reply("ok");
 					});
-				})
-//				)
-				;
-
-//				vertx.eventBus().consumer("redeployV2-" + session, msg -> {
-//
-//					vertx.sharedData().getClusterWideMap("VM", r2 -> {
-//						if (r2.succeeded() && r2.result() != null) {
-//							logger.info("reinicializando ClickVerticle desde sesion {}", deploymentID());
-//							r2.result().get(session, r3 -> {
-//								logger.info("........> {}", session);
-//								Integer oldCount = (Integer) r3.result();
-//								setCounter(oldCount);
-//								logger.info("redeployV2 {} {}", counter, deploymentID());
-//								msg.reply(counter);
-//							});
-//						} else {
-//							msg.reply(counter);
-//						}
-//					});
-//				});
+				});
 
 			} else {
 				logger.error("error", r.cause());
@@ -194,7 +127,6 @@ public class ClickVerticle extends AbstractVerticle implements Serializable {
 	public void stop() throws Exception {
 		super.stop();
 		logger.info("finalizando ClickVerticle {}", deploymentID());
-//		consumers.stream().forEach(c -> c.unregister());
 	}
 
 	public Integer getCounter() {

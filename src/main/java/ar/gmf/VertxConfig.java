@@ -42,27 +42,6 @@ public class VertxConfig {
 	@Autowired
 	SpringVerticleFactory springVerticleFactory;
 	
-	/*
-	 * TODO: borrar ya que se arma con HazelcastConfig
-	 */
-//	@Bean(destroyMethod = "shutdown")
-//	public HazelcastInstance hazelcastInstance(Environment env) {
-//
-//		if (StringUtils.isBlank(System.getProperty("app.nodo"))) {
-//			System.setProperty("app.nodo", env.getProperty("app.nodo", "TA"));
-//		}
-//		if (StringUtils.isBlank(System.getProperty("app.members"))) {
-//			System.setProperty("app.members", env.getProperty("app.members", "127.0.0.1"));
-//		}
-//		if (StringUtils.isBlank(System.getProperty("spring.profiles.active"))) {
-//			System.setProperty("spring.profiles.active", env.getProperty("spring.profiles.active", ""));
-//		}
-//
-//		Config config = new ClasspathXmlConfig("clusterSIM.xml");
-//		config.setLiteMember(true);
-//		return Hazelcast.newHazelcastInstance(config);
-//	}
-
 	@Bean(destroyMethod = "close")
 	public Vertx vertx(Environment env, SpringVerticleFactory springVerticleFactory) throws Throwable {
 

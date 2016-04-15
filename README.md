@@ -45,4 +45,25 @@ The webserver has 3 important parts:
 3.	emigrate: if you get the `http://localhost:8080/emigrate` all the living Verticles will emigrate to others instances in the cluster
 
 
-##### 
+##### HA / Failover
+
+
+### 18080
+	2016-04-15 16:31:34.365 [t]  INFO 13941 -> [ntloop-thread-5] (Application.java:74) Application: unregister initConsumer
+	2016-04-15 16:31:34.382 [t]  INFO 13941 -> [ntloop-thread-5] (Application.java:86) Application: apagando -> initclick 9826b789-89d5-478a-b3ed-4b7eb19692a9
+	2016-04-15 16:31:34.498 [t]  INFO 13941 -> [ntloop-thread-2] (ClickVerticle.java:106) ClickVerticle: clicked 11 9826b789-89d5-478a-b3ed-4b7eb19692a9 
+	2016-04-15 16:31:34.503 [t]  INFO 13941 -> [ntloop-thread-5] (Application.java:88) Application: apagando -> initclick -> emigrate 9826b789-89d5-478a-b3ed-4b7eb19692a9
+	2016-04-15 16:31:34.504 [t]  INFO 13941 -> [ntloop-thread-2] (ClickVerticle.java:69) ClickVerticle: undeploy emigrate-v-9826b789-89d5-478a-b3ed-4b7eb19692a9
+	2016-04-15 16:31:34.517 [t]  INFO 13941 -> [ntloop-thread-2] (ClickVerticle.java:196) ClickVerticle: finalizando ClickVerticle 9826b789-89d5-478a-b3ed-4b7eb19692a9
+	2016-04-15 16:31:34.523 [t]  INFO 13941 -> [ntloop-thread-5] (Application.java:90) Application: apagando -> initclick -> emigrate -> ok 9826b789-89d5-478a-b3ed-4b7eb19692a9
+
+
+
+### 8080
+	2016-04-15 16:31:34.385 [t]  INFO 13989 -> [ntloop-thread-3] (Application.java:67) Application: initClick 23377
+	2016-04-15 16:31:34.493 [t]  INFO 13989 -> [ntloop-thread-3] (Application.java:128) Application: deploy ClickVerticle d456d5ec-17ce-49ec-8b31-58916f0bdf25
+	2016-04-15 16:31:34.504 [t]  INFO 13989 -> [ntloop-thread-7] (ClickVerticle.java:79) ClickVerticle: reinicializando ClickVerticle desde sesion d456d5ec-17ce-49ec-8b31-58916f0bdf25
+	2016-04-15 16:31:39.396 [t]  INFO 13989 -> [ntloop-thread-7] (ClickVerticle.java:106) ClickVerticle: clicked 12 d456d5ec-17ce-49ec-8b31-58916f0bdf25 
+	2016-04-15 16:31:39.677 [t]  INFO 13989 -> [ntloop-thread-7] (ClickVerticle.java:106) ClickVerticle: clicked 13 d456d5ec-17ce-49ec-8b31-58916f0bdf25 
+	2016-04-15 16:31:39.908 [t]  INFO 13989 -> [ntloop-thread-7] (ClickVerticle.java:106) ClickVerticle: clicked 14 d456d5ec-17ce-49ec-8b31-58916f0bdf25 
+	2016-04-15 16:31:40.117 [t]  INFO 13989 -> [ntloop-thread-7] (ClickVerticle.java:106) ClickVerticle: clicked 15 d456d5ec-17ce-49ec-8b31-58916f0bdf25 
